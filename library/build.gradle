@@ -1,14 +1,22 @@
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
+    id 'maven-publish'
 }
 
+def currentVersion = '1.0'
+
 android {
+    namespace = 'ax.nd.xposedutil'
     compileSdk 32
 
     defaultConfig {
         minSdk 26
         targetSdk 32
+        version currentVersion
+        aarMetadata {
+            minCompileSdk = 29
+        }
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -27,6 +35,12 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
 }
 
 dependencies {
@@ -38,4 +52,32 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+}
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId = 'ax.nd.xposedutil'
+            artifactId = 'xposedutil'
+            version = currentVersion
+
+            afterEvaluate {
+                from components.release
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'gitlab'
+            def projectId = 4
+            url "https://git.svc.vepta.org/api/v4/projects/$projectId/packages/maven"
+            credentials(HttpHeaderCredentials) {
+                name = "Private-Token"
+                value = veptaGitlabPackageRegistryPersonalToken
+            }
+            authentication {
+                header(HttpHeaderAuthentication)
+            }
+        }
+    }
 }
